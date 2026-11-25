@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Students{% endblock %}
+{% block content %}
+  <div class="page-head">
+    <div><h1>Students Management</h1><p>{{ section.full_label }}</p></div>
+    <a href="{% url 'student_add' %}" class="btn btn-primary"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>Add student</a>
+  </div>
+
+  <form method="get" style="display:flex;gap:8px">
+    <input class="input" type="search" name="q" placeholder="Search students" aria-label="Search students"
+           data-live-filter="#student-table" data-live-empty="live-empty" autocomplete="off"
+           style="width:100%;max-width:320px">
+  </form>
+
+  <div class="card">
+    {% if students %}
+      <div class="table-wrap">
+        <table class="table" id="student-table">
+          <thead><tr><th>Student no.</th><th>Name</th><th>PIN</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody>
+            {% for s in students %}
+              <tr>
+                <td>{{ s.student_number }}</td>
+                <td>{{ s.last_name }}, {{ s.first_name }}</td>
+                <td>
+                  {% if s.is_locked %}<span class="badge badge-muted">Locked</span>
+                  {% elif s.has_pin %}<span class="badge">PIN set</span>
+                  {% else %}<span class="badge badge-muted">Sets at first payment</span>{% endif %}
+                </td>
+                <td>{% if s.is_active %}Active{% else %}<span class="muted">Inactive</span>{% endif %}</td>
+                <td class="actions">
+                  <a class="btn btn-sm" href="{% url 'student_edit' s.pk %}">Edit</a>
+                  {% if s.has_pin %}
+                    <form method="post" action="{% url 'student_reset_pin' s.pk %}" class="inline" onsubmit="return confirm('Reset the PIN for this student?')">{% csrf_token %}
+                      <button type="submit" class="btn btn-sm">Reset PIN</button>
+                    </form>
+                  {% endif %}
+                  <form method="post" action="{% url 'student_toggle' s.pk %}" class="inline">{% csrf_token %}
+                    <button type="submit" class="btn btn-sm{% if s.is_active %} btn-danger{% endif %}">{% if s.is_active %}Deactivate{% else %}Activate{% endif %}</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <p class="muted" id="live-empty" style="margin:12px 0 0" hidden>No students match your search.</p>
+    {% else %}
+      <p class="muted" style="margin:0">No students yet. Add the first one, and don't forget yourself.</p>
+    {% endif %}
+  </div>
+{% endblock %}
+
+{% block extra_js %}
+  {% include "partials/live_filter.html" %}
+{% endblock %}

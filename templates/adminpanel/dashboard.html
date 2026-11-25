@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+  <div class="page-head">
+    <div><h1>Dashboard</h1><p>System Overview</p></div>
+    <a href="{% url 'treasurer_add' %}" class="btn btn-primary"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>Register treasurer</a>
+  </div>
+
+  <div class="stats">
+    <a class="card stat" href="{% url 'treasurers' %}">
+      <div class="label">Treasurers</div>
+      <div class="value">{{ treasurer_count }}</div>
+      <div class="sub">Active accounts</div>
+    </a>
+    <div class="card stat">
+      <div class="label">Sections</div>
+      <div class="value">{{ section_count }}</div>
+      <div class="sub">{{ sections_without }} without a treasurer</div>
+    </div>
+    <div class="card stat">
+      <div class="label">Students</div>
+      <div class="value">{{ student_count }}</div>
+      <div class="sub">Across all sections</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="page-head" style="margin-bottom:12px">
+      <h2 style="margin:0">Treasurers</h2>
+      <a class="btn btn-sm" href="{% url 'treasurers' %}">View all</a>
+    </div>
+    {% if treasurers %}
+      {% include "adminpanel/_treasurer_table.html" with next="admin_dashboard" %}
+    {% else %}
+      <p class="muted" style="margin:0">No treasurers yet. Register the first one.</p>
+    {% endif %}
+  </div>
+  
+  {% include "adminpanel/_credentials_modal.html" %}
+{% endblock %}

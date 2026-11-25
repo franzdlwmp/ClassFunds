@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Record cash-out{% endblock %}
+{% block content %}
+  <div class="page-head"><div><h1>Record cash-out</h1><p>{{ section.full_label }}</p></div></div>
+  <div class="card" style="max-width:560px">
+    <form method="post" style="display:flex;flex-direction:column;gap:16px">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+      <label class="field">E-wallet {{ form.wallet }}{{ form.wallet.errors }}</label>
+      <p class="muted" style="margin:0">Left in each wallet:
+        {% for w in wallets %}{{ w.label }} ₱{{ w.left|floatformat:"2g" }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
+      <label class="field">Amount (₱) {{ form.amount }}{{ form.amount.errors }}</label>
+      <label class="field">Reference number (optional) {{ form.reference }}{{ form.reference.errors }}</label>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <a href="{% url 'cashouts' %}" class="btn">Cancel</a>
+        <button type="submit" class="btn btn-primary">Record cash-out</button>
+      </div>
+    </form>
+  </div>
+{% endblock %}

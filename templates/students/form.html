@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}{% if object %}Edit student{% else %}Add student{% endif %}{% endblock %}
+{% block content %}
+  <div class="page-head">
+    <div><h1>{% if object %}Edit student{% else %}Add student{% endif %}</h1></div>
+  </div>
+  <div class="card" style="max-width:520px">
+    <form method="post" style="display:flex;flex-direction:column;gap:16px">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+      <label class="field">Student number {{ form.student_number }}{{ form.student_number.errors }}</label>
+      <label class="field">Last name {{ form.last_name }}{{ form.last_name.errors }}</label>
+      <label class="field">First name {{ form.first_name }}{{ form.first_name.errors }}</label>
+      {% if not object %}<p class="muted" style="margin:0">The student sets their own PIN at their first payment.</p>{% endif %}
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <a href="{% url 'students' %}" class="btn">Cancel</a>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+{% endblock %}

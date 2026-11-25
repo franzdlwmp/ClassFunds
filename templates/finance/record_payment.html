@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% block title %}Record payment{% endblock %}
+{% block content %}
+  <div class="page-head"><div><h1>Record payment</h1><p>{{ section.name }}</p></div></div>
+  <div class="card" style="max-width:560px">
+    <form method="post" id="payment-form" {% if form.pin.errors %}data-pin-error="1"{% endif %} style="display:flex;flex-direction:column;gap:16px">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+      <label class="field">Student {{ form.student }}{{ form.student.errors }}</label>
+      <label class="field">Collection {{ form.collection }}{{ form.collection.errors }}</label>
+      <label class="field" id="period-field"{% if form.is_bound %} data-bound="1"{% endif %}>Month {{ form.period }}{{ form.period.errors }}</label>
+      <label class="field">Amount (₱) {{ form.amount }}{{ form.amount.errors }}</label>
+      <label class="field">Payment method {{ form.method }}{{ form.method.errors }}</label>
+      <label class="field" id="reference-field">Reference number {{ form.reference }}{{ form.reference.errors }}</label>
+      <label style="display:flex;gap:10px;align-items:center;font-weight:600">{{ form.manual_no_pin }} Record without PIN (manual)</label>
+      <label class="field" id="note-field">Reason for recording without a PIN {{ form.no_pin_note }}{{ form.no_pin_note.errors }}</label>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <a href="{% url 'transactions' %}" class="btn">Cancel</a>
+        <button type="button" id="continue-btn" class="btn btn-primary">Continue</button>
+      </div>
+
+      <div class="modal-backdrop" id="pin-modal" role="dialog" aria-modal="true" aria-labelledby="pin-title">
+        <div class="modal">
+          <h2 id="pin-title">Enter your PIN</h2>
+          <div class="modal-summary">
+            <div><span class="muted">Student</span><strong id="m-student"></strong></div>
+            <div><span class="muted">Collection</span><strong id="m-collection"></strong></div>
+            <div><span class="muted">Method</span><strong id="m-method"></strong></div>
+            <div><span class="muted">Amount</span><strong id="m-amount"></strong></div>
+          </div>
+          <div id="pin-server-error" role="alert">{{ form.pin.errors }}</div>
+          <div class="errorlist" id="pin-client-error" role="alert" hidden></div>
+          <div id="pin-enter">
+            <p class="muted" style="margin:0 0 8px">The student types the PIN. The treasurer should look away.</p>
+            <div class="pin-row" data-field="enter">{% for i in "123456" %}<input class="pin-box" type="password" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="PIN digit {{ i }}">{% endfor %}</div>
+          </div>
+          <div id="pin-create" hidden>
+            <p class="muted" style="margin:0 0 8px">First payment: create a six-digit PIN.</p>
+            <div class="pin-row" data-field="create">{% for i in "123456" %}<input class="pin-box" type="password" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="New PIN digit {{ i }}">{% endfor %}</div>
+            <p class="muted" style="margin:12px 0 8px">Enter it again.</p>
+            <div class="pin-row" data-field="confirm">{% for i in "123456" %}<input class="pin-box" type="password" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Confirm PIN digit {{ i }}">{% endfor %}</div>
+          </div>
+          <input type="hidden" name="pin" id="pin-value">
+          <input type="hidden" name="pin_confirm" id="pin-confirm-value">
+          <div class="modal-actions">
+            <button type="button" class="btn" data-close-modal>Cancel</button>
+            <button type="submit" class="btn btn-primary">Confirm payment</button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+{% endblock %}
+
+{% block extra_js %}
+{{ pin_status|json_script:"pin-status" }}
+<script>
+(function () {
+  var form = document.getElementById('payment-form');
+  var modal = document.getElementById('pin-modal');
+  var status = JSON.parse(document.getElementById('pin-status').textContent);
+  var student = document.getElementById('id_student');
+  var collection = document.getElementById('id_collection');
+  var amount = document.getElementById('id_amount');
+  var method = document.getElementById('id_method');
+  var manual = document.getElementById('id_manual_no_pin');
+  var continueBtn = document.getElementById('continue-btn');
+  var serverError = document.getElementById('pin-server-error');
+  var clientError = document.getElementById('pin-client-error');
+
+  function text(sel) { return sel.options[sel.selectedIndex].text; }
+  function boxes(field) { return form.querySelectorAll('[data-field="' + field + '"] .pin-box'); }
+  function value(field) { return Array.prototype.map.call(boxes(field), function (b) { return b.value; }).join(''); }
+
+  function refresh() {
+    document.getElementById('reference-field').hidden = method.value === 'cash';
+    document.getElementById('note-field').hidden = !manual.checked;
+    continueBtn.textContent = manual.checked ? 'Record payment' : 'Continue';
+  }
+  method.addEventListener('change', refresh);
+  manual.addEventListener('change', refresh);
+  refresh();
+
+  function openModal() {
+    var hasPin = status[student.value];
+    document.getElementById('pin-title').textContent = hasPin ? 'Enter your PIN' : 'Create your PIN';
+    document.getElementById('pin-enter').hidden = !hasPin;
+    document.getElementById('pin-create').hidden = hasPin;
+    document.getElementById('m-student').textContent = text(student);
+    var periodField = document.getElementById('period-field');
+    document.getElementById('m-collection').textContent = text(collection) +
+      (periodField.hidden ? '' : ' · ' + text(document.getElementById('id_period')));
+    document.getElementById('m-method').textContent = text(method);
+    document.getElementById('m-amount').textContent = '₱' + Number(amount.value).toFixed(2);
+    clientError.hidden = true;
+    modal.classList.add('open');
+    document.getElementById(hasPin ? 'pin-enter' : 'pin-create').querySelector('.pin-box').focus();
+  }
+
+  continueBtn.addEventListener('click', function () {
+    if (!form.reportValidity()) return;
+    if (manual.checked) { form.submit(); return; }
+    serverError.hidden = true;   // a fresh opening should not show the old error
+    openModal();
+  });
+
+  // After a wrong PIN the page reloads; reopen the modal so the message shows inside it
+  if (form.dataset.pinError) openModal();
+
+  // Pressing Enter in the form fields opens the modal instead of submitting without a PIN
+  form.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !modal.contains(e.target) && e.target.tagName !== 'TEXTAREA') {
+      e.preventDefault();
+      continueBtn.click();
+    }
+  });
+
+  // Check all six digits are typed (this never costs a try), then fill the hidden fields
+  form.addEventListener('submit', function (e) {
+    var hasPin = status[student.value];
+    if (!manual.checked) {
+      var incomplete = hasPin ? value('enter').length < 6
+                              : (value('create').length < 6 || value('confirm').length < 6);
+      if (incomplete) {
+        e.preventDefault();
+        serverError.hidden = true;
+        clientError.textContent = 'Enter all six digits.';
+        clientError.hidden = false;
+        return;
+      }
+    }
+    document.getElementById('pin-value').value = hasPin ? value('enter') : value('create');
+    document.getElementById('pin-confirm-value').value = value('confirm');
+  });
+
+  // The six PIN boxes: auto-advance, backspace, and paste
+  form.querySelectorAll('.pin-row').forEach(function (row) {
+    var list = row.querySelectorAll('.pin-box');
+    list.forEach(function (box, i) {
+      box.addEventListener('input', function () {
+        box.value = box.value.replace(/\D/g, '').slice(-1);
+        if (box.value && list[i + 1]) list[i + 1].focus();
+      });
+      box.addEventListener('keydown', function (e) {
+        if (e.key === 'Backspace' && !box.value && list[i - 1]) list[i - 1].focus();
+      });
+      box.addEventListener('paste', function (e) {
+        var digits = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, list.length);
+        if (!digits) return;
+        e.preventDefault();
+        digits.split('').forEach(function (d, k) { list[k].value = d; });
+        list[Math.min(digits.length, list.length - 1)].focus();
+      });
+    });
+  });
+})();
+</script>
+{{ period_info|json_script:"period-info" }}
+<script>
+(function () {
+  var info = JSON.parse(document.getElementById('period-info').textContent);
+  var collection = document.getElementById('id_collection');
+  var period = document.getElementById('id_period');
+  var field = document.getElementById('period-field');
+  var chosen = period.value;
+  function refresh(keepChoice) {
+    var c = info[collection.value];
+    field.hidden = !(c && c.labels.length > 1);
+    period.innerHTML = '';
+    if (!c) { return; }
+    c.labels.forEach(function (label, i) {
+      var opt = document.createElement('option');
+      opt.value = i + 1;
+      opt.textContent = label;
+      period.appendChild(opt);
+    });
+    period.value = keepChoice && Number(chosen) <= c.labels.length ? chosen : c.current;
+  }
+  collection.addEventListener('change', function () { refresh(false); });
+  refresh(field.dataset.bound === '1');
+})();
+</script>
+{% endblock %}

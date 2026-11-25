@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Course & Section Management{% endblock %}
+{% block content %}
+  <div class="page-head">
+    <div><h1>Course & Section Management</h1><p>Sections are grouped by Course.</p></div>
+    <div class="actions">
+      <a href="{% url 'course_add' %}" class="btn">Add course</a>
+      <a href="{% url 'section_add' %}" class="btn btn-primary"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>Add section</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 style="margin:0 0 12px">Courses</h2>
+    {% if courses %}
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Code</th><th>Full name</th><th>Sections</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody>
+            {% for c in courses %}
+              <tr>
+                <td><strong>{{ c.code }}</strong></td>
+                <td>{{ c.name }}</td>
+                <td>{{ c.section_count }}</td>
+                <td>{% if c.is_active %}<span class="badge">Active</span>{% else %}<span class="badge badge-muted">Inactive</span>{% endif %}</td>
+                <td>
+                  <div class="actions">
+                    <a class="btn btn-sm" href="{% url 'course_edit' c.pk %}">Edit</a>
+                    <form method="post" action="{% url 'course_toggle' c.pk %}" class="inline">{% csrf_token %}
+                      {% if c.is_active %}<button type="submit" class="btn btn-sm btn-danger">Deactivate</button>
+                      {% else %}<button type="submit" class="btn btn-sm">Activate</button>{% endif %}
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="muted" style="margin:0">No courses yet. Add the first one, for example BSIT.</p>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h2 style="margin:0 0 12px">Sections</h2>
+    <div class="pills" style="margin-bottom:12px">
+      <a class="pill{% if course_filter == 'all' %} active{% endif %}" href="?course=all">All courses</a>
+      {% for c in courses %}{% if c.is_active %}
+        <a class="pill{% if course_filter == c.pk|stringformat:'s' %} active{% endif %}" href="?course={{ c.pk }}">{{ c.code }}</a>
+      {% endif %}{% endfor %}
+    </div>
+    {% if sections %}
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Section</th><th>Course</th><th>Treasurer</th><th>Students</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody>
+            {% for s in sections %}
+              <tr>
+                <td>{{ s.name }}</td>
+                <td>{{ s.course.code }}</td>
+                <td>{% if s.treasurer %}{{ s.treasurer.get_full_name|default:s.treasurer.username }}{% else %}<span class="muted">No treasurer</span>{% endif %}</td>
+                <td>{{ s.student_count }}</td>
+                <td>{% if s.is_active %}<span class="badge">Active</span>{% else %}<span class="badge badge-muted">Inactive</span>{% endif %}</td>
+                <td><a class="btn btn-sm" href="{% url 'section_edit' s.pk %}">{% if s.treasurer %}Edit{% else %}Assign treasurer{% endif %}</a></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="muted" style="margin:0">No sections here yet.</p>
+    {% endif %}
+  </div>
+{% endblock %}

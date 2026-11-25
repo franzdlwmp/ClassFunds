@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Record expense{% endblock %}
+{% block content %}
+  <div class="page-head"><div><h1>Record expense</h1><p>{{ section.full_label }}</p></div></div>
+  <div class="card" style="max-width:560px">
+    <form method="post" style="display:flex;flex-direction:column;gap:16px">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+      <label class="field">Description {{ form.description }}{{ form.description.errors }}</label>
+      <label class="field">Amount (₱) {{ form.amount }}{{ form.amount.errors }}</label>
+      <p class="muted" style="margin:0">Available balance: ₱{{ balance|floatformat:"2g" }}</p>
+      <label class="field">Paid with {{ form.method }}{{ form.method.errors }}</label>
+      <label class="field">Receipt note (optional) {{ form.receipt_note }}{{ form.receipt_note.errors }}</label>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <a href="{% url 'transactions' %}" class="btn">Cancel</a>
+        <button type="submit" class="btn btn-primary">Record expense</button>
+      </div>
+    </form>
+  </div>
+{% endblock %}

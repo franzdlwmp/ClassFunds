@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}New collection{% endblock %}
+{% block content %}
+  <div class="page-head"><div><h1>New collection</h1></div></div>
+  <div class="card" style="max-width:520px">
+    <form method="post" style="display:flex;flex-direction:column;gap:16px">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+      <label class="field">Name {{ form.name }}{{ form.name.errors }}</label>
+      <label class="field">Type {{ form.kind }}{{ form.kind.errors }}</label>
+      <label class="field">Amount per student (₱) {{ form.default_amount }}{{ form.default_amount.errors }}</label>
+      <p class="muted" style="margin:0">Fixed: everyone pays this amount. Variable: This is only a starting amount (you can leave it empty), and you can set each student's amount afterwards.</p>
+      <label class="field" id="months-field">Runs for {{ form.months }}{{ form.months.errors }}</label>
+      <p class="muted" id="months-preview" style="margin:0" hidden></p>
+      <label class="field" id="deadline-field">Deadline (optional) {{ form.deadline }}{{ form.deadline.errors }}</label>
+      <label class="field">Description (optional) {{ form.description }}{{ form.description.errors }}</label>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <a href="{% url 'collections' %}" class="btn">Cancel</a>
+        <button type="submit" class="btn btn-primary">Create collection</button>
+      </div>
+    </form>
+  </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  var kind = document.getElementById('id_kind');
+  var months = document.getElementById('id_months');
+  var amount = document.getElementById('id_default_amount');
+  var monthsField = document.getElementById('months-field');
+  var deadlineField = document.getElementById('deadline-field');
+  var preview = document.getElementById('months-preview');
+  var names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  function refresh() {
+    var fixed = kind.value === 'fixed';
+    var n = parseInt(months.value, 10) || 1;
+    var recurring = fixed && n > 1;
+    monthsField.hidden = !fixed;
+    deadlineField.hidden = recurring;
+    if (!recurring) { preview.hidden = true; return; }
+    var now = new Date();
+    var end = new Date(now.getFullYear(), now.getMonth() + n, 0);
+    var total = (parseFloat(amount.value) || 0) * n;
+    preview.textContent = 'Runs ' + names[now.getMonth()] + ' ' + now.getFullYear() + ' to ' +
+      names[end.getMonth()] + ' ' + end.getFullYear() + '. Each student owes ₱' +
+      total.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) +
+      ' in total. The deadline is set to ' + names[end.getMonth()] + ' ' + end.getDate() + ', ' + end.getFullYear() + '.';
+    preview.hidden = false;
+  }
+  [kind, months, amount].forEach(function (el) {
+    el.addEventListener('change', refresh);
+    el.addEventListener('input', refresh);
+  });
+  refresh();
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Register Treasurer{% endblock %}
+{% block content %}
+  <div class="page-head"><div><h1>Register Treasurer</h1></div></div>
+  <div class="card" style="max-width:560px">
+    <form method="post" style="display:flex;flex-direction:column;gap:16px">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+      <label class="field">First name {{ form.first_name }}{{ form.first_name.errors }}</label>
+      <label class="field">Last name {{ form.last_name }}{{ form.last_name.errors }}</label>
+      <label class="field">Username {{ form.username }}{{ form.username.errors }}</label>
+      <label class="field">Email (optional) {{ form.email }}{{ form.email.errors }}</label>
+      <label class="field">Course {{ form.course }}{{ form.course.errors }}</label>
+      {% if not form.fields.course.queryset.exists %}
+        <p class="muted" style="margin:0">There are no active courses yet. <a class="link" href="{% url 'course_add' %}">Add a course</a> first if you want to assign a section.</p>
+      {% endif %}
+      <label class="field">Section (optional) {{ form.section }}{{ form.section.errors }}</label>
+      <p class="muted" style="margin:0">Pick a course first. The section list shows that course's sections with no treasurer, and sections whose treasurer is inactive (marked "replaces"). To replace an active treasurer, deactivate them first. A temporary password is generated and shown once after you register. The treasurer must change it at their first login.</p>
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+        <a href="{% url 'treasurers' %}" class="btn">Cancel</a>
+        <button type="submit" class="btn btn-primary">Register Treasurer</button>
+      </div>
+      </div>
+    </form>
+  </div>
+{% endblock %}
+
+{% block extra_js %}
+{{ sections_by_course|json_script:"sections-data" }}
+<script>
+(function () {
+  var data = JSON.parse(document.getElementById('sections-data').textContent);
+  var course = document.getElementById('id_course');
+  var section = document.getElementById('id_section');
+  var chosen = section.value;
+
+  function refresh(keepChoice) {
+    var list = data[course.value] || [];
+    section.innerHTML = '';
+    var first = document.createElement('option');
+    first.value = '';
+    first.textContent = !course.value ? 'Select a course first'
+      : (list.length ? 'No section yet' : 'No free sections in this course');
+    section.appendChild(first);
+    list.forEach(function (s) {
+      var opt = document.createElement('option');
+      opt.value = s.id;
+      opt.textContent = s.name;
+      if (keepChoice && String(s.id) === chosen) { opt.selected = true; }
+      section.appendChild(opt);
+    });
+    section.disabled = !course.value;
+  }
+
+  course.addEventListener('change', function () { refresh(false); });
+  refresh(true);
+})();
+</script>
+{% endblock %}

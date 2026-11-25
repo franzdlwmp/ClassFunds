@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}{{ collection.name }}{% endblock %}
+{% block content %}
+  <div class="page-head">
+    <div>
+      <h1>{{ collection.name }}</h1>
+      <p>{{ section.full_label }} · {{ collection.get_kind_display }}
+        {% if collection.months > 1 %} · {{ collection.months }} months ({{ collection.period_label }}){% endif %}
+        {% if collection.deadline %} · Due {{ collection.deadline|date:"M j, Y" }}{% endif %}
+        · {% if collection.is_open %}<span class="badge">Open</span>{% else %}<span class="badge badge-muted">Closed</span>{% endif %}</p>
+    </div>
+    <div class="actions">
+      <a href="{% url 'collections' %}" class="btn">Back</a>
+      <form method="post" action="{% url 'collection_toggle' collection.pk %}" class="inline">{% csrf_token %}
+        <button type="submit" class="btn">{% if collection.is_open %}Close collection{% else %}Reopen collection{% endif %}</button>
+      </form>
+    </div>
+  </div>
+
+  {% if collection.description %}<div class="card"><p style="margin:0">{{ collection.description }}</p></div>{% endif %}
+
+  <div class="card">
+    <div class="page-head" style="margin-bottom:12px">
+      <h2 style="margin:0">{{ collection.name }}: payment status{% if month_choices %} · {{ month_name }}{% endif %}</h2>
+      <div class="muted" style="text-align:right">
+        <div>{% if month_choices %}{{ month_name }}: {% endif %}collected ₱{{ collected|floatformat:"2g" }} of ₱{{ total_due|floatformat:"2g" }} due</div>
+        {% if month_choices %}<div>All months: collected ₱{{ overall_collected|floatformat:"2g" }} of ₱{{ overall_due|floatformat:"2g" }} due</div>{% endif %}
+        <div>Remitted ₱{{ remitted|floatformat:"2g" }} · to remit ₱{{ to_remit|floatformat:"2g" }}</div>
+      </div>
+    </div>
+
+    {% if month_choices %}
+      <div class="pills" style="margin-bottom:12px">
+        {% for n, label in month_choices %}
+          <a class="pill{% if n == period %} active{% endif %}" href="?month={{ n }}&status={{ status_filter }}">{{ label }}</a>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <div class="pills" style="margin-bottom:12px">
+      <a class="pill{% if status_filter == 'all' %} active{% endif %}" href="?status=all&month={{ period }}">All</a>
+      <a class="pill{% if status_filter == 'paid' %} active{% endif %}" href="?status=paid&month={{ period }}">Paid</a>
+      <a class="pill{% if status_filter == 'partial' %} active{% endif %}" href="?status=partial&month={{ period }}">Partial</a>
+      <a class="pill{% if status_filter == 'unpaid' %} active{% endif %}" href="?status=unpaid&month={{ period }}">Unpaid</a>
+    </div>
+
+    {% if rows %}
+      {% if collection.kind == "variable" %}<form method="post">{% csrf_token %}{% endif %}
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Student</th><th>Required</th><th>Paid</th><th>Status</th></tr></thead>
+          <tbody>
+            {% for r in rows %}
+              <tr>
+                <td>{{ r.student.last_name }}, {{ r.student.first_name }}</td>
+                <td>
+                  {% if collection.kind == "variable" %}
+                    <input class="input" style="width:140px" type="number" step="0.01" min="0" name="amount_{{ r.obligation.pk }}" value="{{ r.amount_due }}" aria-label="Amount for {{ r.student }}">
+                  {% else %}₱{{ r.amount_due|floatformat:"2g" }}{% endif %}
+                </td>
+                <td class="amount-in">₱{{ r.paid|floatformat:"2g" }}</td>
+                <td>
+                  {% if r.status == "paid" %}<span class="badge">Fully paid</span>
+                  {% elif r.status == "partial" %}<span class="badge badge-warn">Partially paid</span>
+                  {% elif r.status == "unpaid" %}<span class="badge badge-muted">Unpaid</span>
+                  {% else %}<span class="muted">No amount due</span>{% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if collection.kind == "variable" %}
+        <div style="margin-top:16px"><button type="submit" class="btn btn-primary">Save amounts</button></div>
+      </form>
+      {% endif %}
+    {% else %}
+      <p class="muted" style="margin:0">{% if status_filter == "all" %}No students yet. Add students first, then they get obligations in open collections automatically.{% else %}No students in this group.{% endif %}</p>
+    {% endif %}
+  </div>
+{% endblock %}

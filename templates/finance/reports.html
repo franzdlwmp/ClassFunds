@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+  <div class="print-only">
+    <h1 style="margin:0">ClassFunds report</h1>
+    <p style="margin:4px 0 16px">{{ section.full_label }} · {{ today|date:"F j, Y" }}</p>
+  </div>
+
+  <div class="page-head no-print">
+    <div><h1>Reports</h1><p>{{ section.full_label }}</p></div>
+    <div class="actions">
+      <button type="button" class="btn" onclick="window.print()">Print / Save as PDF</button>
+      <a class="btn btn-primary" href="{% url 'reports_excel' %}">Download Excel</a>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="card stat"><div class="label">Collected</div><div class="value">₱{{ collected|floatformat:"2g" }}</div><div class="sub">All collections</div></div>
+    <div class="card stat"><div class="label">Spent</div><div class="value">₱{{ spent|floatformat:"2g" }}</div><div class="sub">All expenses</div></div>
+    <div class="card stat"><div class="label">Balance</div><div class="value">₱{{ balance|floatformat:"2g" }}</div><div class="sub">Collected minus spent</div></div>
+    <div class="card stat"><div class="label">Still to remit</div><div class="value">₱{{ to_remit|floatformat:"2g" }}</div><div class="sub">Remitted ₱{{ remitted|floatformat:"2g" }} so far</div></div>
+  </div>
+
+  <div class="card">
+    <h2 style="margin:0 0 8px">Collection Progress</h2>
+    {% for p in progress %}
+      <div style="padding:12px 0;border-bottom:1px solid var(--ln)">
+        <div class="list-row" style="border:0;padding:0">
+          <div>
+            <a class="link" href="{% url 'collection_detail' p.collection.pk %}">{{ p.collection.name }}</a>
+            <div class="sub">{{ p.collection.get_kind_display }}{% if p.collection.months > 1 %} · {{ p.collection.months }} months{% endif %}</div>
+          </div>
+          <strong>{{ p.percent }}%</strong>
+        </div>
+        <div class="progress"><span style="width:{{ p.percent }}%"></span></div>
+        <div class="sub" style="margin-top:6px">₱{{ p.collected|floatformat:"2g" }} of ₱{{ p.due|floatformat:"2g" }} · remitted ₱{{ p.remitted|floatformat:"2g" }} · to remit ₱{{ p.to_remit|floatformat:"2g" }}</div>
+      </div>
+    {% empty %}
+      <p class="muted" style="margin:0">No collections yet.</p>
+    {% endfor %}
+  </div>
+
+  <div class="card">
+    <h2 style="margin:0 0 8px">Who still owes</h2>
+    {% if collections %}
+      <form method="get" class="actions no-print" style="margin-bottom:12px">
+        <select name="collection" class="input" style="width:auto" aria-label="Collection" onchange="this.form.submit()">
+          {% for c in collections %}<option value="{{ c.pk }}"{% if c == selected %} selected{% endif %}>{{ c.name }}</option>{% endfor %}
+        </select>
+        {% if month_choices %}
+          <select name="month" class="input" style="width:auto" aria-label="Month" onchange="this.form.submit()">
+            {% for n, label in month_choices %}<option value="{{ n }}"{% if n == period %} selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select>
+        {% endif %}
+      </form>
+      <p class="muted" style="margin:0 0 8px">Students who haven't fully paid {{ selected.name }}{% if month_choices %} for {{ month_name }}{% endif %}.</p>
+      {% if unpaid %}
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Student no.</th><th>Name</th><th>Required</th><th>Paid</th><th>Left</th><th>Status</th></tr></thead>
+            <tbody>
+              {% for r in unpaid %}
+                <tr>
+                  <td>{{ r.student.student_number }}</td>
+                  <td>{{ r.student.last_name }}, {{ r.student.first_name }}</td>
+                  <td>₱{{ r.amount_due|floatformat:"2g" }}</td>
+                  <td>₱{{ r.paid|floatformat:"2g" }}</td>
+                  <td><strong>₱{{ r.left|floatformat:"2g" }}</strong></td>
+                  <td>{% if r.status == "partial" %}<span class="badge badge-warn">Partial</span>{% else %}<span class="badge badge-muted">Unpaid</span>{% endif %}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="muted" style="margin:0">Everyone has fully paid. Nothing is owed here.</p>
+      {% endif %}
+    {% else %}
+      <p class="muted" style="margin:0">No collections yet.</p>
+    {% endif %}
+  </div>
+{% endblock %}

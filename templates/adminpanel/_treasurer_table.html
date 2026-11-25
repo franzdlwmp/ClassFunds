@@ -1,0 +1,29 @@
+<div class="table-wrap">
+  <table class="table" id="treasurer-table">
+    <thead><tr><th>Treasurer</th><th>Section</th><th>Students</th><th>Status</th><th>Action</th></tr></thead>
+    <tbody>
+      {% for t in treasurers %}
+        <tr>
+          <td>{{ t.get_full_name|default:t.username }}<div class="muted" style="font-size:13px">{{ t.username }}</div></td>
+          <td>{% if t.section %}{{ t.section.course.code }} · {{ t.section.name }}{% else %}<span class="muted">No section</span>{% endif %}</td>
+          <td>{% if t.section %}{{ t.student_count }}{% else %}—{% endif %}</td>
+          <td>{% if t.is_active %}<span class="badge">Active</span>{% else %}<span class="badge badge-muted">Inactive</span>{% endif %}</td>
+          <td>
+            <div class="actions">
+              <form method="post" action="{% url 'treasurer_reset' t.pk %}" class="inline"
+                    onsubmit="return confirm('Reset the password for {{ t.username|escapejs }}? Their current password will stop working.')">
+                {% csrf_token %}<input type="hidden" name="next" value="{{ next }}">
+                <button type="submit" class="btn btn-sm">Reset password</button>
+              </form>
+              <form method="post" action="{% url 'treasurer_toggle' t.pk %}" class="inline">
+                {% csrf_token %}<input type="hidden" name="next" value="{{ next }}">
+                {% if t.is_active %}<button type="submit" class="btn btn-sm btn-danger">Deactivate</button>
+                {% else %}<button type="submit" class="btn btn-sm">Activate</button>{% endif %}
+              </form>
+            </div>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

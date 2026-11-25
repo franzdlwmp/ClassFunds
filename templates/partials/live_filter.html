@@ -1,0 +1,27 @@
+<script>
+(function () {
+  document.querySelectorAll('input[data-live-filter]').forEach(function (input) {
+    var rows = document.querySelectorAll(input.dataset.liveFilter + ' tbody tr');
+    var empty = document.getElementById(input.dataset.liveEmpty);
+
+    function apply() {
+      var terms = input.value.toLowerCase().split(/\s+/).filter(Boolean);
+      var shown = 0;
+      rows.forEach(function (row) {
+        var cells = row.querySelectorAll('td:not(:last-child)');
+        var text = Array.prototype.map.call(cells, function (c) { return c.textContent; }).join(' ').toLowerCase();
+        var match = terms.every(function (t) { return text.indexOf(t) !== -1; });
+        row.hidden = !match;
+        if (match) { shown++; }
+      });
+      if (empty) { empty.hidden = shown !== 0; }
+    }
+
+    input.addEventListener('input', apply);
+    if (input.form) {
+      input.form.addEventListener('submit', function (e) { e.preventDefault(); });
+    }
+    apply();
+  });
+})();
+</script>

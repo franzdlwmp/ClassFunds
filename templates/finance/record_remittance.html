@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Record Remittance{% endblock %}
+{% block content %}
+  <div class="page-head"><div><h1>Record Remittance</h1><p>{{ section.full_label }}</p></div></div>
+  <div class="card" style="max-width:560px">
+    <form method="post" style="display:flex;flex-direction:column;gap:16px">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+      <label class="field">Collection {{ form.collection }}{{ form.collection.errors }}</label>
+      <label class="field">Amount (₱) {{ form.amount }}{{ form.amount.errors }}</label>
+      <label class="field">Note (optional) {{ form.note }}{{ form.note.errors }}</label>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <a href="{% url 'cashouts' %}" class="btn">Cancel</a>
+        <button type="submit" class="btn btn-primary">Record Remittance</button>
+      </div>
+    </form>
+  </div>
+{% endblock %}

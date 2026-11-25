@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Collections{% endblock %}
+{% block content %}
+  <div class="page-head">
+    <div><h1>Collections</h1><p>{{ section.full_label }}</p></div>
+    <a href="{% url 'collection_add' %}" class="btn btn-primary"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>New collection</a>
+  </div>
+
+  <div class="card">
+    {% if collections %}
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Collection</th><th>Type</th><th>Amount</th><th>Deadline</th><th>Collected</th><th>Students</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            {% for c in collections %}
+              <tr>
+                <td>{{ c.name }}</td>
+                <td>{{ c.get_kind_display }}</td>
+                <td>
+                  {% if c.kind == "fixed" %}
+                    ₱{{ c.default_amount|floatformat:"2g" }}{% if c.months > 1 %} per month{% else %} each{% endif %}
+                    {% if c.months > 1 %}<br><span class="muted">× {{ c.months }} months = ₱{{ c.total_amount|floatformat:"2g" }} · {{ c.period_label }}</span>{% endif %}
+                  {% else %}<span class="muted">Set per student</span>{% endif %}
+                </td>
+                <td>{{ c.deadline|date:"M j, Y"|default:"—" }}</td>
+                <td class="amount-in">₱{{ c.collected|floatformat:"2g" }}</td>
+                <td>{{ c.student_count }}</td>
+                <td>{% if c.is_open %}<span class="badge">Open</span>{% else %}<span class="badge badge-muted">Closed</span>{% endif %}</td>
+                <td class="actions"><a class="btn btn-sm" href="{% url 'collection_detail' c.pk %}">View</a></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="muted" style="margin:0">No collections yet. Create the first one, for example monthly dues.</p>
+    {% endif %}
+  </div>
+{% endblock %}

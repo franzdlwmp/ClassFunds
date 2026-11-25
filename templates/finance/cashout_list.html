@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}E-wallet cash-outs{% endblock %}
+{% block content %}
+  <div class="page-head">
+    <div><h1>E-wallet cash-outs</h1><p>{{ section.full_label }}</p></div>
+    <a href="{% url 'record_cashout' %}" class="btn btn-primary"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>Record cash-out</a>
+  </div>
+
+  <div class="stats">
+    <div class="card stat"><div class="label">E-wallet received</div><div class="value">₱{{ received|floatformat:"2g" }}</div><div class="sub">{{ received_text|default:"No e-wallet payments yet" }}</div></div>
+    <div class="card stat"><div class="label">Cashed out</div><div class="value">₱{{ cashed_out|floatformat:"2g" }}</div><div class="sub">{{ cashout_count }} cash-out{{ cashout_count|pluralize }}</div></div>
+    <div class="card stat"><div class="label">Still in e-wallet</div><div class="value">₱{{ left|floatformat:"2g" }}</div><div class="sub">Not yet cashed out</div></div>
+  </div>
+
+  <div class="card">
+    <h2 style="margin:0 0 12px">Cash-out history</h2>
+    {% if cashouts %}
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Date</th><th>Wallet</th><th>Reference</th><th>Amount</th><th>Action</th></tr></thead>
+          <tbody>
+            {% for c in cashouts %}
+              <tr{% if c.is_void %} class="row-void"{% endif %}>
+                <td>{{ c.cashed_out_at|date:"M j, Y g:i A" }}</td>
+                <td>{{ c.get_wallet_display }}</td>
+                <td>{{ c.reference|default:"—" }}</td>
+                <td{% if c.is_void %} style="text-decoration:line-through"{% endif %}>₱{{ c.amount|floatformat:"2g" }}</td>
+                <td>
+                  {% if c.is_void %}<span class="badge badge-muted" title="{{ c.void_reason }}">Voided</span>
+                  {% else %}<button type="button" class="btn btn-sm btn-danger" data-void-url="{% url 'cashout_void' c.pk %}" data-void-summary="Cash-out of ₱{{ c.amount|floatformat:'2g' }} from {{ c.get_wallet_display }}">Void</button>{% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="muted" style="margin:0">No cash-outs yet.</p>
+    {% endif %}
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <div class="page-head" style="margin-bottom:12px">
+      <h2 style="margin:0">Remitted to department officers</h2>
+      <a href="{% url 'record_remittance' %}" class="btn">Record remittance</a>
+    </div>
+    {% if remit_rows %}
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Collection</th><th>Status</th><th>Collected</th><th>Remitted</th><th>To remit</th><th></th></tr></thead>
+          <tbody>
+            {% for r in remit_rows %}
+              <tr>
+                <td>{{ r.collection.name }}</td>
+                <td>
+                  {% if r.status == "full" %}<span class="badge">Fully remitted</span>
+                  {% elif r.status == "partial" %}<span class="badge badge-warn">Partly remitted</span>
+                  {% elif r.status == "none" %}<span class="badge badge-muted">Not remitted</span>
+                  {% else %}<span class="muted">Nothing collected</span>{% endif %}
+                </td>
+                <td>₱{{ r.collected|floatformat:"2g" }}</td>
+                <td>₱{{ r.remitted|floatformat:"2g" }}</td>
+                <td><strong>₱{{ r.to_remit|floatformat:"2g" }}</strong></td>
+                <td>{% if r.to_remit > 0 %}<a class="btn btn-sm" href="{% url 'record_remittance' %}?collection={{ r.collection.pk }}">Remit</a>{% endif %}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="muted" style="margin:0">No collections yet.</p>
+    {% endif %}
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h2 style="margin:0 0 12px">Remittance history</h2>
+    {% if remittances %}
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Date</th><th>Collection</th><th>Note</th><th>Amount</th><th>Action</th></tr></thead>
+          <tbody>
+            {% for m in remittances %}
+              <tr{% if m.is_void %} class="row-void"{% endif %}>
+                <td>{{ m.remitted_at|date:"M j, Y g:i A" }}</td>
+                <td>{{ m.collection.name }}</td>
+                <td>{{ m.note|default:"—" }}</td>
+                <td{% if m.is_void %} style="text-decoration:line-through"{% endif %}>₱{{ m.amount|floatformat:"2g" }}</td>
+                <td>
+                  {% if m.is_void %}<span class="badge badge-muted" title="{{ m.void_reason }}">Voided</span>
+                  {% else %}<button type="button" class="btn btn-sm btn-danger" data-void-url="{% url 'remittance_void' m.pk %}" data-void-summary="Remittance of ₱{{ m.amount|floatformat:'2g' }} for {{ m.collection.name }}">Void</button>{% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="muted" style="margin:0">No remittances yet.</p>
+    {% endif %}
+  </div>
+
+  {% include "partials/void_modal.html" %}
+{% endblock %}

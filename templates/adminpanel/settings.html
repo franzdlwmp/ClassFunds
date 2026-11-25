@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+  <div class="page-head"><div><h1>Settings</h1><p>Your account and the login page</p></div></div>
+  {% include "accounts/_account_cards.html" %}
+
+  <div class="card" style="max-width:640px">
+    <h2 style="margin:0 0 4px">Login page contact details</h2>
+    <p class="muted" style="margin:0 0 12px">Shown in the Contact admin box on the login page, so treasurers know how to reach you for a new account or a password reset.</p>
+    <form method="post" style="display:flex;flex-direction:column;gap:16px">
+      {% csrf_token %}
+      <input type="hidden" name="form" value="contact">
+      {{ contact_form.non_field_errors }}
+      <label class="field">Admin email {{ contact_form.email }}{{ contact_form.email.errors }}</label>
+      <label class="field">Messenger link {{ contact_form.messenger }}{{ contact_form.messenger.errors }}</label>
+      <div style="display:flex;justify-content:flex-end"><button type="submit" class="btn btn-primary">Save contact details</button></div>
+    </form>
+  </div>
+{% endblock %}

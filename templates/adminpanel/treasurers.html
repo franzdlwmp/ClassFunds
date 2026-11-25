@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Treasurer Management{% endblock %}
+{% block content %}
+  <div class="page-head">
+    <div><h1>Treasurer Management</h1><p>Register treasurers and reset their passwords.</p></div>
+    <a href="{% url 'treasurer_add' %}" class="btn btn-primary"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>Register treasurer</a>
+  </div>
+
+  <form method="get" class="actions">
+    <input class="input" type="search" name="q" placeholder="Search treasurers" aria-label="Search treasurers"
+           data-live-filter="#treasurer-table" data-live-empty="live-empty" autocomplete="off"
+           style="width:100%;max-width:320px">
+  </form>
+
+  <div class="card">
+    {% if treasurers %}
+      {% include "adminpanel/_treasurer_table.html" with next="treasurers" %}
+      <p class="muted" id="live-empty" style="margin:12px 0 0" hidden>No treasurers match your search.</p>
+    {% else %}
+      <p class="muted" style="margin:0">No treasurers yet. Register the first one.</p>
+    {% endif %}
+  </div>
+
+  {% include "adminpanel/_credentials_modal.html" %}
+{% endblock %}
+
+{% block extra_js %}
+  {% include "partials/live_filter.html" %}
+{% endblock %}

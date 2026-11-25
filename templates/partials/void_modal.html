@@ -1,0 +1,36 @@
+<div class="modal-backdrop" id="void-modal" role="dialog" aria-modal="true" aria-labelledby="void-title">
+  <div class="modal">
+    <h2 id="void-title">Void this entry?</h2>
+    <p class="muted" id="void-summary"></p>
+    <form method="post" id="void-form" style="display:flex;flex-direction:column;gap:16px">
+      {% csrf_token %}
+      <label class="field">Reason for voiding
+        <textarea name="reason" id="void-reason" rows="3" class="input" required maxlength="300" style="height:auto;padding:10px 12px"></textarea>
+      </label>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button type="button" class="btn" id="void-cancel">Cancel</button>
+        <button type="submit" class="btn btn-danger">Void</button>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+(function () {
+  var modal = document.getElementById('void-modal');
+  var form = document.getElementById('void-form');
+  var reason = document.getElementById('void-reason');
+  function close() { modal.classList.remove('open'); }
+  document.querySelectorAll('[data-void-url]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      form.action = btn.dataset.voidUrl;
+      document.getElementById('void-summary').textContent = btn.dataset.voidSummary;
+      reason.value = '';
+      modal.classList.add('open');
+      reason.focus();
+    });
+  });
+  document.getElementById('void-cancel').addEventListener('click', close);
+  modal.addEventListener('click', function (e) { if (e.target === modal) close(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+})();
+</script>

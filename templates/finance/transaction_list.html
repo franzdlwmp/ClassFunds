@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Transactions{% endblock %}
+{% block content %}
+  <div class="page-head">
+    <div><h1>Transactions</h1><p>{{ section.full_label }}</p></div>
+    <div class="actions">
+      <a href="{% url 'record_expense' %}" class="btn">Record expense</a>
+      <a href="{% url 'record_payment' %}" class="btn btn-primary"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>Record payment</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <form method="get" class="actions" style="margin-bottom:12px">
+      <input type="hidden" name="type" value="{{ type_filter }}">
+      <div class="pills">
+        <a class="pill{% if type_filter == 'all' %} active{% endif %}" href="?type=all&method={{ method_filter }}">All</a>
+        <a class="pill{% if type_filter == 'in' %} active{% endif %}" href="?type=in&method={{ method_filter }}">Money in</a>
+        <a class="pill{% if type_filter == 'out' %} active{% endif %}" href="?type=out&method={{ method_filter }}">Money out</a>
+      </div>
+      <select name="method" class="input" style="width:auto" aria-label="Payment method" onchange="this.form.submit()">
+        <option value="all"{% if method_filter == "all" %} selected{% endif %}>All methods</option>
+        {% for value, label in methods %}
+          <option value="{{ value }}"{% if method_filter == value %} selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </form>
+
+    {% if rows %}
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Date</th><th>Description</th><th>Method</th><th>Reference</th><th>Verification</th><th>Amount</th><th>Balance</th><th>Action</th></tr></thead>
+          <tbody>
+            {% for r in rows %}
+              <tr{% if r.is_void %} class="row-void"{% endif %}>
+                <td>{{ r.when|date:"M j, Y g:i A" }}</td>
+                <td>{{ r.description }}</td>
+                <td>{{ r.method_label }}</td>
+                <td>{{ r.reference|default:"—" }}</td>
+                <td>
+                  {% if r.is_void %}
+                    <span class="badge badge-muted" title="{{ r.void_reason }}">Voided</span>
+                  {% else %}
+                    <span class="badge{% if r.check_muted %} badge-muted{% endif %}" title="{{ r.check_note }}">{{ r.check }}</span>
+                  {% endif %}
+                </td>
+                {% if r.kind == "in" %}
+                  <td class="amount-in">+₱{{ r.amount|floatformat:"2g" }}</td>
+                {% else %}
+                  <td class="amount-out">-₱{{ r.amount|floatformat:"2g" }}</td>
+                {% endif %}
+                <td>{% if r.is_void %}—{% else %}₱{{ r.balance|floatformat:"2g" }}{% endif %}</td>
+                <td>
+                  {% if not r.is_void %}
+                    <button type="button" class="btn btn-sm btn-danger"
+                            data-void-url="{% if r.kind == 'in' %}{% url 'payment_void' r.obj.pk %}{% else %}{% url 'expense_void' r.obj.pk %}{% endif %}"
+                            data-void-summary="₱{{ r.amount|floatformat:'2g' }} · {{ r.description }}">Void</button>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="muted" style="margin:0">No transactions match. Record a payment or an expense, or change the filters.</p>
+    {% endif %}
+  </div>
+
+  <div class="modal-backdrop" id="void-modal" role="dialog" aria-modal="true" aria-labelledby="void-title">
+    <div class="modal">
+      <h2 id="void-title">Void this transaction?</h2>
+      <p class="muted" id="void-summary"></p>
+      <form method="post" id="void-form" style="display:flex;flex-direction:column;gap:16px">
+        {% csrf_token %}
+        <label class="field">Reason for voiding
+          <textarea name="reason" id="void-reason" rows="3" class="input" required maxlength="300" style="height:auto;padding:10px 12px"></textarea>
+        </label>
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+          <button type="button" class="btn" id="void-cancel">Cancel</button>
+          <button type="submit" class="btn btn-danger">Void</button>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  var modal = document.getElementById('void-modal');
+  var form = document.getElementById('void-form');
+  var reason = document.getElementById('void-reason');
+  function close() { modal.classList.remove('open'); }
+  document.querySelectorAll('[data-void-url]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      form.action = btn.dataset.voidUrl;
+      document.getElementById('void-summary').textContent = btn.dataset.voidSummary;
+      reason.value = '';
+      modal.classList.add('open');
+      reason.focus();
+    });
+  });
+  document.getElementById('void-cancel').addEventListener('click', close);
+  modal.addEventListener('click', function (e) { if (e.target === modal) close(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+})();
+</script>
+{% endblock %}

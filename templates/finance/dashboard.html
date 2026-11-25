@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+  <div class="page-head">
+    <div><h1>Dashboard</h1><p>{{ section.full_label }}</p></div>
+    <a href="{% url 'collection_add' %}" class="btn btn-primary"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>New collection</a>
+  </div>
+
+  {% if section %}
+    <div class="stats">
+      <div class="card stat">
+        <div class="label">Collected</div>
+        <div class="value">₱{{ collected|floatformat:"2g" }}</div>
+        <div class="sub">From {{ paying_students }} student{{ paying_students|pluralize }}</div>
+      </div>
+      <div class="card stat">
+        <div class="label">Spent</div>
+        <div class="value">₱{{ spent|floatformat:"2g" }}</div>
+        <div class="sub">{{ expense_count }} expense{{ expense_count|pluralize }}</div>
+      </div>
+      <div class="card stat">
+        <div class="label">Balance</div>
+        <div class="value">₱{{ balance|floatformat:"2g" }}</div>
+        <div class="sub">Collected minus spent</div>
+      </div>
+    </div>
+
+    <div class="dash-grid">
+      <div class="card">
+        <div class="page-head" style="margin-bottom:4px">
+          <h2 style="margin:0">Collections</h2>
+          <a class="btn btn-sm" href="{% url 'reports' %}">Full report →</a>
+        </div>
+        {% for p in progress %}
+          <a href="{% url 'collection_detail' p.collection.pk %}" style="display:block;padding:12px 0;border-bottom:1px solid var(--ln)">
+            <div class="list-row" style="border:0;padding:0">
+              <div>
+                <div>{{ p.collection.name }}</div>
+                <div class="sub">{{ p.collection.get_kind_display }}{% if p.collection.months > 1 %} · {{ p.collection.months }} months{% endif %}</div>
+              </div>
+              <div>
+                {% if p.collection.kind == "fixed" %}₱{{ p.collection.default_amount|floatformat:"2g" }}{% if p.collection.months > 1 %} per month{% else %} per student{% endif %}
+                {% else %}<span class="muted">Set per student</span>{% endif %}
+              </div>
+            </div>
+            <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ p.percent }}" aria-label="{{ p.collection.name }} collected"><span style="width:{{ p.percent }}%"></span></div>
+            <div class="sub" style="margin-top:6px">₱{{ p.collected|floatformat:"2g" }} of ₱{{ p.due|floatformat:"2g" }}{% if p.month_name %} · {{ p.month_name }}: {{ p.month_paid }} of {{ p.month_total }} paid{% endif %}</div>
+          </a>
+        {% empty %}
+          <p class="muted" style="margin:12px 0 0">No collections yet. Create the first one.</p>
+        {% endfor %}
+      </div>
+
+      <div class="card">
+        <div class="page-head" style="margin-bottom:4px">
+          <h2 style="margin:0">Recent transactions</h2>
+          <a class="btn btn-sm" href="{% url 'transactions' %}">View all</a>
+        </div>
+        {% for r in recent %}
+          <div class="list-row">
+            <div>
+              <div>{{ r.description }}</div>
+              <div class="sub">{{ r.when|date:"M j" }}</div>
+            </div>
+            {% if r.kind == "in" %}
+              <div class="amount-in">+₱{{ r.amount|floatformat:"2g" }}</div>
+            {% else %}
+              <div class="amount-out">-₱{{ r.amount|floatformat:"2g" }}</div>
+            {% endif %}
+          </div>
+        {% empty %}
+          <p class="muted" style="margin:12px 0 0">No transactions yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+  {% else %}
+    <div class="card"><p class="muted" style="margin:0">Your account isn't assigned to a section yet. Ask the admin to assign one.</p></div>
+  {% endif %}
+{% endblock %}
