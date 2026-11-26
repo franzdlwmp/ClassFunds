@@ -20,6 +20,19 @@
     save('theme', next);
   });
 
+  // Sign-in password visibility
+  document.querySelectorAll('[data-password-toggle]').forEach(function (button) {
+    var input = document.getElementById(button.getAttribute('aria-controls'));
+    if (!input) return;
+    button.hidden = false;
+    button.addEventListener('click', function () {
+      var show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      button.textContent = show ? 'Hide' : 'Show';
+      button.setAttribute('aria-pressed', show ? 'true' : 'false');
+    });
+  });
+
   // Account menu
   var ab = document.getElementById('account-btn');
   var menu = document.getElementById('account-menu');

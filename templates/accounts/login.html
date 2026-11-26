@@ -26,7 +26,12 @@
       {% csrf_token %}
       {{ form.non_field_errors }}
       <label class="field">Username {{ form.username }}</label>
-      <label class="field">Password {{ form.password }}</label>
+      <label class="field">Password
+        <span class="password-input">
+          {{ form.password }}
+          <button type="button" class="password-toggle" aria-controls="{{ form.password.id_for_label }}" aria-pressed="false" data-password-toggle hidden>Show</button>
+        </span>
+      </label>
       <input type="hidden" name="next" value="{{ next }}">
       <button type="submit" class="btn btn-primary" style="justify-content:center">Sign in</button>
     </form>
