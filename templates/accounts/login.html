@@ -29,7 +29,7 @@
       <label class="field">Password
         <span class="password-input">
           {{ form.password }}
-          <button type="button" class="password-toggle" aria-controls="{{ form.password.id_for_label }}" aria-pressed="false" data-password-toggle hidden>Show</button>
+          <button type="button" class="password-toggle" aria-label="Toggle password visibility" aria-controls="{{ form.password.id_for_label }}" aria-pressed="false" data-password-toggle hidden><svg class="icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
         </span>
       </label>
       <input type="hidden" name="next" value="{{ next }}">

@@ -25,10 +25,10 @@
     var input = document.getElementById(button.getAttribute('aria-controls'));
     if (!input) return;
     button.hidden = false;
+    button.removeAttribute('title');
     button.addEventListener('click', function () {
       var show = input.type === 'password';
       input.type = show ? 'text' : 'password';
-      button.textContent = show ? 'Hide' : 'Show';
       button.setAttribute('aria-pressed', show ? 'true' : 'false');
     });
   });
