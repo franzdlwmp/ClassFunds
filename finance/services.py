@@ -194,8 +194,6 @@ def collection_progress(section):
     rows = []
     for c in section.collections.all():
         total_due = due.get(c.pk, Decimal("0.00"))
-        if c.kind == Collection.FIXED:
-            total_due *= c.months
         got = collected.get(c.pk, Decimal("0.00"))
         sent = remitted.get(c.pk, Decimal("0.00"))
         percent = int(min(100, got / total_due * 100)) if total_due > 0 else 0
