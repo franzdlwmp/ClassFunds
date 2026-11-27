@@ -21,10 +21,28 @@
     {% csrf_token %}
     <input type="hidden" name="form" value="password">
     {{ password_form.non_field_errors }}
-    <label class="field">Current password {{ password_form.old_password }}{{ password_form.old_password.errors }}</label>
+    <label class="field">Current password
+      <span class="password-input">
+        {{ password_form.old_password }}
+        <button type="button" class="password-toggle" aria-label="Toggle password visibility" aria-controls="{{ password_form.old_password.id_for_label }}" aria-pressed="false" data-password-toggle hidden><svg class="icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
+      </span>
+      {{ password_form.old_password.errors }}
+    </label>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
-      <label class="field">New password {{ password_form.new_password1 }}{{ password_form.new_password1.errors }}</label>
-      <label class="field">Confirm new password {{ password_form.new_password2 }}{{ password_form.new_password2.errors }}</label>
+      <label class="field">New password
+        <span class="password-input">
+          {{ password_form.new_password1 }}
+          <button type="button" class="password-toggle" aria-label="Toggle password visibility" aria-controls="{{ password_form.new_password1.id_for_label }}" aria-pressed="false" data-password-toggle hidden><svg class="icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
+        </span>
+        {{ password_form.new_password1.errors }}
+      </label>
+      <label class="field">Confirm new password
+        <span class="password-input">
+          {{ password_form.new_password2 }}
+          <button type="button" class="password-toggle" aria-label="Toggle password visibility" aria-controls="{{ password_form.new_password2.id_for_label }}" aria-pressed="false" data-password-toggle hidden><svg class="icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
+        </span>
+        {{ password_form.new_password2.errors }}
+      </label>
     </div>
     <div class="muted" style="font-size:13px">{{ password_form.new_password1.help_text|safe }}</div>
     <div style="display:flex;justify-content:flex-end"><button type="submit" class="btn btn-primary">Change password</button></div>
